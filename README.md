@@ -6,6 +6,17 @@ This is a simple OSC messaging overlay for `cnmat/OSC` and PlatformIO (Arduino).
 
 This project is a base project and should not be used as a dependency. Instead, clone this repository and use it as a base for your own project.
 
+You can also run this code as a header-only library. To do so, copy the `OSC.h` file into your project and include it in your code. You will also need to include the `cnmat/OSC` library in your `platformio.ini` file. For example:
+
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+lib_deps =
+	cnmat/OSC@0.0.0-alpha+sha.41b44981e3
+```
+
 ## Usage
 
 ### Setup

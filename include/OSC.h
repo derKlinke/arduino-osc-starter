@@ -12,7 +12,7 @@
 
 #include <string>
 
-#define SEND_TYPED_MESSAGE_DECLARATION(type) int sendMessage(const std::string& name, type message)
+#define SEND_TYPED_MESSAGE_DECLARATION(type) int sendMessage(const std::string &name, type message)
 
 #define SEND_TYPED_MESSAGE(type)                           \
     SEND_TYPED_MESSAGE_DECLARATION(type) {                 \
@@ -30,6 +30,9 @@
         return 0;                                          \
     }
 
+// Reset the Arduino.
+void (*resetFunc)() = nullptr;
+
 class OSCHandler {
 public:
     /// @brief Construct a new OSCHandler object
@@ -42,12 +45,43 @@ public:
     /// @brief Begin the OSC connection
     /// @param ssid SSID of the WiFi network
     /// @param password Password of the WiFi network
-    void begin(const std::string& ssid, const std::string& password);
+    void begin(const std::string &ssid, const std::string &password) {
+        WiFi.begin(ssid.c_str(), password.c_str());
+
+        Serial.print("Trying to connect to WIFI ");
+        int connectionIterator = 0;
+
+        // lets check every 100ms if we are connected to the WiFi network
+        while (WiFiClass::status() != WL_CONNECTED) {
+            delay(100);
+            Serial.print("=");
+            ++connectionIterator;
+
+            // if connection takes too long try restarting the board
+            if (connectionIterator > 200) {
+                resetFunc();
+            }
+        }
+        Serial.print("DONE!\n");
+
+        // light up the LED to indicate that we are connected
+        digitalWrite(BUILTIN_LED, HIGH);
+
+        int udpStatus = Udp.begin(localPort);
+        if (udpStatus == 0) {
+            Serial.println("UDP could not get socket");
+        }
+
+        // wait a bit to wait for osc connection to be fully established
+        delay(1000);
+
+        Serial.println("Successfully setup an instance of OSCHandler!");
+    }
 
     SEND_TYPED_MESSAGE(int)
     SEND_TYPED_MESSAGE(float)
     SEND_TYPED_MESSAGE(double)
-    SEND_TYPED_MESSAGE(const char*)
+    SEND_TYPED_MESSAGE(const char *)
 
     // send string message by converting it to a const char*
     SEND_TYPED_MESSAGE_DECLARATION(std::string) {
